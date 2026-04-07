@@ -1,0 +1,104 @@
+\documentclass[11pt]{article}       % set main text size
+\usepackage[letterpaper,                % set paper size to letterpaper. change to a4paper for resumes outside of North America
+top=0.5in,                          % specify top page margin
+bottom=0.5in,                       % specify bottom page margin
+left=0.5in,                         % specify left page margin
+right=0.5in]{geometry}              % specify right page margin
+                       
+\usepackage{XCharter}               % set font. comment this line out if you want to use the default LaTeX font Computer Modern
+\usepackage[T1]{fontenc}            % output encoding
+\usepackage[utf8]{inputenc}         % input encoding
+\usepackage{enumitem}               % enable lists for bullet points: itemize and \item
+\usepackage[hidelinks]{hyperref}    % format hyperlinks
+\usepackage{titlesec}               % enable section title customization
+\raggedright                        % disable text justification
+\pagestyle{empty}                   % disable page numbering
+
+% ensure PDF output will be all-Unicode and machine-readable
+\input{glyphtounicode}
+\pdfgentounicode=1
+
+% format section headings: bolding, size, white space above and below
+\titleformat{\section}{\bfseries\large}{}{0pt}{}[\vspace{1pt}\titlerule\vspace{-6.5pt}]
+
+% format bullet points: size, white space above and below, white space between bullets
+\renewcommand\labelitemi{$\vcenter{\hbox{\small$\bullet$}}$}
+\setlist[itemize]{itemsep=-2pt, leftmargin=12pt, topsep=7pt} %%% Test various topsep values to fix vertical spacing errors
+
+% resume starts here
+\begin{document}
+
+% name
+\centerline{\Huge Wyatt Shinkle}
+
+\vspace{5pt}
+
+% contact information
+\centerline{\href{mailto:wyattshink@gmail.com}{wyattshink@gmail.com} \textbar{} \href{https://www.linkedin.com/in/wyatt-shinkle}{www.linkedin.com/in/wyatt-shinkle} \textbar{} \href{https://wshinkle.dev}{wshinkle.dev}}
+
+\vspace{-10pt}
+
+% skills section
+\section*{Skills}
+\textbf{Languages:} C/C++, C\#, TypeScript, SQL \\
+\textbf{Frameworks \& Tools:} .NET, Angular, Docker, Git \\
+\textbf{Cloud \& Infrastructure:} Azure, AWS, Linux, GitHub Actions
+\vspace{-6.5pt}
+
+% experience section
+\section*{Experience}
+\textbf{IT Applications Engineer,} {Cleveland Cliffs} -- West Chester, OH \hfill May 2024 -- Present \\
+\vspace{-9pt}
+\begin{itemize}
+    \item Led modernization of a Micro Focus-based ERP system to a .NET/Azure/Angular tech stack, improving maintainability and developer velocity across the engineering team
+    \item Developed and maintained core frontend Angular libraries adopted across all new internal Cliffs applications, standardizing UI patterns and reducing per-project setup time
+    \item Collaborated with subject matter experts to analyze legacy systems and design modernized .NET/C\# backends, translating complex business logic into scalable APIs
+    \item Served as a key contributor in the design, architecture, and implementation of the Cliffs Red System Finance Application, delivering a full-stack solution from the ground up
+\end{itemize}
+
+\textbf{Data Scientist,} {OU Institutional Effectiveness and Analytics} -- Athens, OH \hfill Sept 2023 -- May 2024 \\
+\vspace{-9pt}
+\begin{itemize}
+    \item Built an OCR pipeline to extract and digitize student transcript data from non-machine-readable image formats, enabling downstream analytics workflows
+    \item Applied NLP techniques to parse OCR output and accurately classify course names, grades, and academic metadata at scale
+\end{itemize}
+
+\textbf{Development Support Intern,} {NextGen Federal Systems} -- Morgantown, WV \hfill May 2023 -- May 2024 \\
+\vspace{-9pt}
+\begin{itemize}
+    \item Researched and prototyped ML-driven tooling to streamline the government proposal process, reducing manual document review time
+    \item Deployed transformer-based models for semantic indexing, generative search, and question-answering over a vectorized document database
+    \item Prepared and structured company RFP data for use in model fine-tuning pipelines, improving domain-specific retrieval accuracy
+    \item Benchmarked multiple LLMs and vector database solutions, selecting the optimal combination for performance and accuracy requirements
+\end{itemize}
+
+\vspace{-18.5pt}
+
+% projects section
+\section*{Projects}
+\textbf{DME/MLS Modernization}
+\vspace{-9pt}
+\begin{itemize}
+    \item Tasked with converting the Distance Measure Equipment/Microwave Landing System from FORTRAN77 to C++ to increase maintainability and scalability, as well as bring software up to industry standards
+    \item Worked in an Agile environment with a small team, converting FORTRAN77 subroutines to equivalent C++ functions using Object Oriented Programming techniques
+\end{itemize}
+
+
+
+% alternate formatting for projects section
+% \section*{Projects}
+% \begin{itemize}
+%   \item \textbf{QuantSoftware Toolkit:} Open source Python library for data analysis and machine learning for finance
+%   \item \textbf{GitHub Visualization:} Data visualization of Git Log data using D3 to analyze project trends over time
+%   \item \textbf{Recommendation System:} Music and movie recommender systems using collaborative filtering on public datasets
+%   \item \textbf{Mac Setup:} Book that gives step by step instructions on setting up developer environment on Mac OS
+% \end{itemize}
+
+\vspace{-18.5pt}
+
+% education section
+\section*{Education}
+\textbf{Ohio University} -- BS in Computer Science \hfill May 2024 \\
+\textbf{Sinclair Community College} -- AS in Liberal Arts And Sciences \hfill May 2023 \\
+\end{document}
+
