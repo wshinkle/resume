@@ -2,13 +2,10 @@ name: Compile LaTeX and Submit PDF
  
 on:
   push:
+    branches:
+      - main
     branches-ignore:
       - 'latex-pdf/**'   # prevent recursive triggering from this workflow's own PRs
-    paths:
-      - '**.tex'
-      - '**.bib'
-      - '**.sty'
-  pull_request:
     paths:
       - '**.tex'
       - '**.bib'
@@ -102,12 +99,8 @@ jobs:
  
       # ---------------------------------------------------------------
       # Commit the PDF to a bot branch and open (or update) a PR.
-      # Skipped on pull_request events from forks (no write permission).
       # ---------------------------------------------------------------
       - name: Commit PDF and open PR
-        if: >
-          github.event_name != 'pull_request' ||
-          github.event.pull_request.head.repo.full_name == github.repository
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -151,6 +144,7 @@ jobs:
                 --head "$PR_BRANCH" \
                 --base "$SOURCE_BRANCH" \
                 --title "PDF: compiled output for \`$SOURCE_BRANCH\`"
+                --body "Updated resume compiled from LaTex"
               echo "PR created."
             else
               echo "PR #$EXISTING_PR already exists – updated the branch."
