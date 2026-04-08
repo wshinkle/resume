@@ -141,7 +141,7 @@ jobs:
               gh pr create \
                 --head "$PR_BRANCH" \
                 --base "$SOURCE_BRANCH" \
-                --title "PDF: compiled output for \`$SOURCE_BRANCH\`"
+                --title "PDF: compiled output for \`$SOURCE_BRANCH\`" \
                 --body "Updated resume compiled from LaTex"
               echo "PR created."
             else
