@@ -71,7 +71,6 @@ jobs:
             -interaction=nonstopmode
             -halt-on-error
             -outdir=./pdf-output
-          extra_system_packages: "cm-super dvipng"
         # Don't let the action itself fail; we handle errors below.
         continue-on-error: true
         id: latex
