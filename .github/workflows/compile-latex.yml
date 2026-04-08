@@ -150,24 +150,7 @@ jobs:
               gh pr create \
                 --head "$PR_BRANCH" \
                 --base "$SOURCE_BRANCH" \
-                --title "PDF: compiled output for \`$SOURCE_BRANCH\`" \
-                --body "$(cat <<'EOF'
-                ## Compiled PDF
-                 
-                This PR was opened automatically by the **Compile LaTeX** workflow.
-                 
-                | Field | Value |
-                |-------|-------|
-                | Source file | \`${{ steps.resolve.outputs.tex_file }}\` |
-                | Source branch | \`'"$SOURCE_BRANCH"'\` |
-                | Commit | \`${{ github.sha }}\` |
-                 
-                The PDF is committed to \`output/\` in this branch. You can also download it
-                from the [Actions run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
-                 
-                Merge this PR to persist the PDF in your repository, or close it to discard.
-                EOF
-                )"
+                --title "PDF: compiled output for \`$SOURCE_BRANCH\`"
               echo "PR created."
             else
               echo "PR #$EXISTING_PR already exists – updated the branch."
