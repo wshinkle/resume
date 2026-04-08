@@ -1,0 +1,176 @@
+name: Compile LaTeX and Submit PDF
+ 
+on:
+  push:
+    branches-ignore:
+      - 'latex-pdf/**'   # prevent recursive triggering from this workflow's own PRs
+    paths:
+      - '**.tex'
+      - '**.bib'
+      - '**.sty'
+  pull_request:
+    paths:
+      - '**.tex'
+      - '**.bib'
+      - '**.sty'
+  workflow_dispatch:      # allow manual runs
+ 
+permissions:
+  contents: write
+  pull-requests: write
+ 
+jobs:
+  build-latex:
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+ 
+      # ---------------------------------------------------------------
+      # Locate the .tex file to compile.
+      # Override by setting the LATEX_MAIN_FILE env var in your repo's
+      # Settings → Secrets and variables → Actions → Variables, e.g.:
+      #   LATEX_MAIN_FILE=docs/paper.tex
+      # If not set, the workflow searches for any *.tex file in the repo.
+      # ---------------------------------------------------------------
+      - name: Resolve main .tex file
+        id: resolve
+        run: |
+          if [ -n "${{ vars.LATEX_MAIN_FILE }}" ]; then
+            TEX_FILE="${{ vars.LATEX_MAIN_FILE }}"
+          else
+            TEX_FILE=$(find . -name '*.tex' \
+                              -not -path './.git/*' \
+                              -not -path './node_modules/*' \
+                              | sort | head -n 1)
+          fi
+ 
+          if [ -z "$TEX_FILE" ]; then
+            echo "::error::No .tex file found. Set the LATEX_MAIN_FILE repository variable."
+            exit 1
+          fi
+ 
+          echo "tex_file=$TEX_FILE"                       >> "$GITHUB_OUTPUT"
+          echo "tex_dir=$(dirname "$TEX_FILE")"           >> "$GITHUB_OUTPUT"
+          echo "tex_base=$(basename "$TEX_FILE" .tex)"    >> "$GITHUB_OUTPUT"
+          echo "Found: $TEX_FILE"
+ 
+      - name: Install TeX Live
+        uses: xu-cheng/latex-action@v3
+        # We just need the environment; actual compilation is below so we
+        # can capture logs and surface errors cleanly.
+        with:
+          # Use a no-op document to make the action install the toolchain
+          # without failing when our file has errors.
+          root_file: ${{ steps.resolve.outputs.tex_file }}
+          latexmk_use_xelatex: false      # change to true if you use XeLaTeX
+          latexmk_shell_escape: false     # change to true if you need --shell-escape
+          args: >-
+            -pdf
+            -interaction=nonstopmode
+            -halt-on-error
+            -outdir=./pdf-output
+          extra_system_packages: "cm-super dvipng"
+        # Don't let the action itself fail; we handle errors below.
+        continue-on-error: true
+        id: latex
+ 
+      # xu-cheng/latex-action compiles into the working dir; copy PDF out.
+      - name: Locate compiled PDF
+        id: pdf
+        run: |
+          PDF=$(find . -name "${{ steps.resolve.outputs.tex_base }}.pdf" \
+                       -not -path './.git/*' | sort | head -n 1)
+          if [ -z "$PDF" ]; then
+            echo "::error::Compilation failed – PDF not produced."
+            echo "--- LaTeX log (last 60 lines) ---"
+            find . -name "*.log" -not -path './.git/*' | sort | head -n 1 \
+              | xargs tail -n 60 || true
+            exit 1
+          fi
+          echo "pdf_path=$PDF" >> "$GITHUB_OUTPUT"
+          echo "PDF found at: $PDF"
+ 
+      # Upload the PDF so it's always downloadable from the Actions run,
+      # even if the PR step is skipped (e.g. on a fork).
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-pdf
+          path: ${{ steps.pdf.outputs.pdf_path }}
+          retention-days: 30
+ 
+      # ---------------------------------------------------------------
+      # Commit the PDF to a bot branch and open (or update) a PR.
+      # Skipped on pull_request events from forks (no write permission).
+      # ---------------------------------------------------------------
+      - name: Commit PDF and open PR
+        if: >
+          github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SOURCE_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          PR_BRANCH="latex-pdf/${SOURCE_BRANCH}"
+          PDF="${{ steps.pdf.outputs.pdf_path }}"
+          PDF_DEST="output/$(basename "$PDF")"   # committed path inside the repo
+ 
+          # Configure git identity
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+ 
+          # Create (or reset) the PR branch from the current commit
+          git checkout -B "$PR_BRANCH"
+ 
+          # Stage the PDF
+          mkdir -p "$(dirname "$PDF_DEST")"
+          cp "$PDF" "$PDF_DEST"
+          git add "$PDF_DEST"
+ 
+          if git diff --cached --quiet; then
+            echo "PDF unchanged – nothing to commit."
+          else
+            git commit -m "chore: update compiled PDF [skip ci]
+ 
+            Source: ${{ steps.resolve.outputs.tex_file }}
+            Triggered by: $SOURCE_BRANCH @ ${{ github.sha }}"
+ 
+            git push origin "$PR_BRANCH" --force
+ 
+            # Open a PR if one doesn't already exist
+            EXISTING_PR=$(gh pr list \
+              --head "$PR_BRANCH" \
+              --base "$SOURCE_BRANCH" \
+              --state open \
+              --json number \
+              --jq '.[0].number' 2>/dev/null || echo "")
+ 
+            if [ -z "$EXISTING_PR" ]; then
+              gh pr create \
+                --head "$PR_BRANCH" \
+                --base "$SOURCE_BRANCH" \
+                --title "PDF: compiled output for \`$SOURCE_BRANCH\`" \
+                --body "$(cat <<'EOF'
+                ## Compiled PDF
+                 
+                This PR was opened automatically by the **Compile LaTeX** workflow.
+                 
+                | Field | Value |
+                |-------|-------|
+                | Source file | \`${{ steps.resolve.outputs.tex_file }}\` |
+                | Source branch | \`'"$SOURCE_BRANCH"'\` |
+                | Commit | \`${{ github.sha }}\` |
+                 
+                The PDF is committed to \`output/\` in this branch. You can also download it
+                from the [Actions run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+                 
+                Merge this PR to persist the PDF in your repository, or close it to discard.
+                EOF
+                )"
+              echo "PR created."
+            else
+              echo "PR #$EXISTING_PR already exists – updated the branch."
+            fi
+          fi
