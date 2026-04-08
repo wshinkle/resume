@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    branches-ignore:
-      - 'latex-pdf/**'   # prevent recursive triggering from this workflow's own PRs
     paths:
       - '**.tex'
       - '**.bib'
